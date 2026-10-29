@@ -1,0 +1,117 @@
+# RackDeck — single-node deployment.
+#
+# Copy to `.env` alongside this file and adjust. Every variable is documented in
+# `.env.example` at the repository root.
+#
+#   docker compose pull && docker compose up -d
+#   docker compose logs -f
+#
+# The image tag is an exact release version, never `latest`. Releases are published to GHCR
+# by `.github/workflows/release.yml`.
+#
+# `build:` is kept so a source checkout can still be exercised with
+# `docker compose up -d --build`. A normal deployment pulls the signed release image instead.
+
+name: homelabmd
+
+services:
+  homelabmd:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    image: ${HOMELABMD_IMAGE_REPOSITORY:-ghcr.io/kaquely/rackdeck}:${HOMELABMD_IMAGE_TAG:?set HOMELABMD_IMAGE_TAG}
+    container_name: homelabmd
+    restart: unless-stopped
+
+    # The product has no authentication, so this port is published to the LAN. Anyone who can
+    # route to this host can read the dashboard.
+    #
+    # To put it behind a reverse proxy instead, comment the block below and uncomment
+    # `expose`, then bind the proxy to loopback. That is the recommended arrangement for
+    # anything beyond a trusted LAN.
+    ports:
+      - "${HOMELABMD_PUBLISH:-3000}:3000"
+    # expose:
+    #   - "3000"
+
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOMELABMD_HOST: "${HOMELABMD_HOST:-0.0.0.0}"
+      HOMELABMD_ROLE: "${HOMELABMD_ROLE:-main}"
+      # 500 ms keeps the dashboard responsive without flooding the host.
+      HOMELABMD_METRICS_INTERVAL_MS: "${HOMELABMD_METRICS_INTERVAL_MS:-500}"
+      # 600 samples at 500 ms is roughly five minutes of history.
+      HOMELABMD_HISTORY_LENGTH: "${HOMELABMD_HISTORY_LENGTH:-600}"
+      HOMELABMD_DATA_DIR: /data
+      HOMELABMD_STATIC_DIR: /app/dist/web
+      HOMELABMD_JSON_BODY_LIMIT: "${HOMELABMD_JSON_BODY_LIMIT:-256kb}"
+      HOMELABMD_LAYOUT_FILE: "${HOMELABMD_LAYOUT_FILE:-layout.json}"
+      HOMELABMD_PEERS_FILE: "${HOMELABMD_PEERS_FILE:-peers.json}"
+      HOMELABMD_REMOTE_NODE_URLS: "${HOMELABMD_REMOTE_NODE_URLS:-}"
+      HOMELABMD_REMOTE_NODE_LABELS: "${HOMELABMD_REMOTE_NODE_LABELS:-}"
+      HOMELABMD_REMOTE_NODE_TOKENS: "${HOMELABMD_REMOTE_NODE_TOKENS:-}"
+      HOMELABMD_REMOTE_NODE_TIMEOUT_MS: "${HOMELABMD_REMOTE_NODE_TIMEOUT_MS:-5000}"
+      HOMELABMD_PEER_ID: "${HOMELABMD_PEER_ID:-}"
+      HOMELABMD_PEER_TOKEN: "${HOMELABMD_PEER_TOKEN:-}"
+      HOMELABMD_PEER_ALLOWED_IPS: "${HOMELABMD_PEER_ALLOWED_IPS:-}"
+      HOMELABMD_PIHOLE_URL: "${HOMELABMD_PIHOLE_URL:-}"
+      HOMELABMD_PIHOLE_PASSWORD: "${HOMELABMD_PIHOLE_PASSWORD:-}"
+      HOMELABMD_PIHOLE_TIMEOUT_MS: "${HOMELABMD_PIHOLE_TIMEOUT_MS:-5000}"
+      HOMELABMD_PIHOLE_TOP_N: "${HOMELABMD_PIHOLE_TOP_N:-10}"
+      HOMELABMD_PIHOLE_TABLES_INTERVAL_MS: "${HOMELABMD_PIHOLE_TABLES_INTERVAL_MS:-10000}"
+      HOMELABMD_PIHOLE_LABEL: "${HOMELABMD_PIHOLE_LABEL:-Pi-hole}"
+      # No installation identifier is sent: only the release repository is contacted.
+      HOMELABMD_UPDATE_CHECK: "${HOMELABMD_UPDATE_CHECK:-github}"
+      HOMELABMD_UPDATE_CHANNEL: "${HOMELABMD_UPDATE_CHANNEL:-stable}"
+      HOMELABMD_UPDATE_CHECK_INTERVAL_MS: "${HOMELABMD_UPDATE_CHECK_INTERVAL_MS:-21600000}"
+      HOMELABMD_UPDATE_REPOSITORY: "${HOMELABMD_UPDATE_REPOSITORY:-Kaquely/RackDeck}"
+    volumes:
+      # The only durable state: the saved dashboard layout.
+      - homelabmd-data:/data
+
+    # A hard memory ceiling keeps the container from degrading the host. The default leaves
+    # headroom below the 300 MB design budget.
+    #
+    # If this is ever too tight the container is killed and restarted, which is a crash loop;
+    # raise the limit or lower HOMELABMD_HISTORY_LENGTH if that happens.
+    mem_limit: ${HOMELABMD_MEMORY_LIMIT:-300m}
+    mem_reservation: ${HOMELABMD_MEMORY_RESERVATION:-192m}
+
+    # Restart only after a clean exit unless explicitly stopped, so a `docker compose down`
+    # is not immediately undone.
+    stop_grace_period: 15s
+
+    # No new privileges, and no capability to reach the host beyond the container.
+    security_opt:
+      - no-new-privileges:true
+
+    # The image already declares a healthcheck. Repeating it in compose keeps the contract
+    # visible to an operator reading the deployment file and to the installer's health gate.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  homelabmd-data:
+    name: homelabmd-data
+    external: true
+
+networks:
+  default:
+    name: homelabmd_default

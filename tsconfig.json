@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": ["node"]
+  },
+  "include": [
+    "src/main.ts",
+    "src/server/**/*.ts",
+    "src/shared/**/*.ts",
+    "tests/**/*.ts",
+    "vite.config.ts"
+  ],
+  "exclude": [
+    "tests/unit/chart-render.test.ts",
+    "tests/unit/display-mode.test.ts",
+    "tests/unit/update-banner.test.ts"
+  ]
+}

@@ -1,0 +1,22 @@
+node_modules/
+dist/
+coverage/
+
+# Build output and caches
+.cache/
+tmp/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

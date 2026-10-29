@@ -1,0 +1,42 @@
+# Keep the build context small and keep host state out of the image.
+
+# Dependencies are installed inside the image from the lockfile.
+node_modules
+**/node_modules
+
+# Build output is produced inside the image, never copied in. Copying it would risk
+# shipping a stale bundle that does not match the sources.
+dist
+**/dist
+
+# Host runtime state. The layout document belongs in a volume, never baked into an image.
+data
+**/data
+
+# Version control and tooling that has no business in a build context.
+.git
+.github
+.gitignore
+
+# Local environment files. .env.example is documentation and is deliberately NOT ignored
+# here, but a real .env must never be sent to the daemon: it can hold host-specific paths
+# and, once integrations exist, credentials.
+.env
+.env.*
+!.env.example
+
+# Documentation is not needed to build or run the product.
+*.md
+!README.md
+
+# Tests, gates and editor configuration.
+tests
+scripts
+.github
+.vscode
+.idea
+
+# Editor and OS noise.
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+build/
+coverage/
+.cache/
+tmp/
+
+# Runtime state (the saved layout document lives here)
+data/
+
+# Language-specific
+__pycache__/
+*.pyc
+node_modules/
+.venv/
+venv/
+
+# Local assistant and code-intelligence artifacts
+.atl/
+.codegraph/
+.gga

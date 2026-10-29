@@ -1,0 +1,71 @@
+name: homelabmd
+
+# Self-contained CasaOS import file.
+#
+# Open CasaOS, choose Import, and upload this file from the release assets. No .env is
+# required: the image tag is exact, and the volume is created by Compose on first start.
+
+services:
+  homelabmd:
+    image: __IMAGE__
+    container_name: homelabmd
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOMELABMD_HOST: 0.0.0.0
+      HOMELABMD_ROLE: main
+      HOMELABMD_METRICS_INTERVAL_MS: "500"
+      HOMELABMD_HISTORY_LENGTH: "600"
+      HOMELABMD_DATA_DIR: /data
+      HOMELABMD_STATIC_DIR: /app/dist/web
+      HOMELABMD_UPDATE_REPOSITORY: __REPOSITORY__
+    volumes:
+      - homelabmd-data:/data
+    mem_limit: 300m
+    mem_reservation: 192m
+    stop_grace_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  homelabmd-data:
+    name: homelabmd-data
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  author: __OWNER__
+  category: Utilities
+  description:
+    en_us: Read-only, real-time dashboard for a homelab.
+  developer: __OWNER__
+  icon: https://raw.githubusercontent.com/__REPOSITORY__/main/deploy/casaos/icon.svg
+  main: homelabmd
+  port_map: "3000"
+  scheme: http
+  store_app_id: homelabmd
+  tagline:
+    en_us: Read-only homelab dashboard.
+  title:
+    en_us: RackDeck

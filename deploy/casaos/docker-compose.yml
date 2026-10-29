@@ -1,0 +1,99 @@
+name: homelabmd
+
+# Canonical CasaOS compose for RackDeck.
+#
+# CasaOS is the compose host, not an app store: it loads this file and the .env beside it.
+# The installer writes both. The version is controlled by HOMELABMD_IMAGE_TAG, never by a
+# moving tag. The application itself never mounts the Docker socket.
+#
+# This file deliberately does not contain unrelated application credentials, a bind to
+# Docker's internal volume path, or a moving image tag.
+
+services:
+  homelabmd:
+    image: ${HOMELABMD_IMAGE_REPOSITORY:-ghcr.io/kaquely/rackdeck}:${HOMELABMD_IMAGE_TAG:?set HOMELABMD_IMAGE_TAG}
+    container_name: homelabmd
+    restart: unless-stopped
+    ports:
+      - "${HOMELABMD_PUBLISH:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOMELABMD_HOST: "${HOMELABMD_HOST:-0.0.0.0}"
+      HOMELABMD_ROLE: "${HOMELABMD_ROLE:-main}"
+      HOMELABMD_METRICS_INTERVAL_MS: "${HOMELABMD_METRICS_INTERVAL_MS:-500}"
+      HOMELABMD_HISTORY_LENGTH: "${HOMELABMD_HISTORY_LENGTH:-600}"
+      HOMELABMD_DATA_DIR: /data
+      HOMELABMD_STATIC_DIR: /app/dist/web
+      HOMELABMD_JSON_BODY_LIMIT: "${HOMELABMD_JSON_BODY_LIMIT:-256kb}"
+      HOMELABMD_LAYOUT_FILE: "${HOMELABMD_LAYOUT_FILE:-layout.json}"
+      HOMELABMD_PEERS_FILE: "${HOMELABMD_PEERS_FILE:-peers.json}"
+      HOMELABMD_REMOTE_NODE_URLS: "${HOMELABMD_REMOTE_NODE_URLS:-}"
+      HOMELABMD_REMOTE_NODE_LABELS: "${HOMELABMD_REMOTE_NODE_LABELS:-}"
+      HOMELABMD_REMOTE_NODE_TOKENS: "${HOMELABMD_REMOTE_NODE_TOKENS:-}"
+      HOMELABMD_REMOTE_NODE_TIMEOUT_MS: "${HOMELABMD_REMOTE_NODE_TIMEOUT_MS:-5000}"
+      HOMELABMD_PEER_ID: "${HOMELABMD_PEER_ID:-}"
+      HOMELABMD_PEER_TOKEN: "${HOMELABMD_PEER_TOKEN:-}"
+      HOMELABMD_PEER_ALLOWED_IPS: "${HOMELABMD_PEER_ALLOWED_IPS:-}"
+      HOMELABMD_PIHOLE_URL: "${HOMELABMD_PIHOLE_URL:-}"
+      HOMELABMD_PIHOLE_PASSWORD: "${HOMELABMD_PIHOLE_PASSWORD:-}"
+      HOMELABMD_PIHOLE_TIMEOUT_MS: "${HOMELABMD_PIHOLE_TIMEOUT_MS:-5000}"
+      HOMELABMD_PIHOLE_TOP_N: "${HOMELABMD_PIHOLE_TOP_N:-10}"
+      HOMELABMD_PIHOLE_TABLES_INTERVAL_MS: "${HOMELABMD_PIHOLE_TABLES_INTERVAL_MS:-10000}"
+      HOMELABMD_PIHOLE_LABEL: "${HOMELABMD_PIHOLE_LABEL:-Pi-hole}"
+      HOMELABMD_UPDATE_CHECK: "${HOMELABMD_UPDATE_CHECK:-github}"
+      HOMELABMD_UPDATE_CHANNEL: "${HOMELABMD_UPDATE_CHANNEL:-stable}"
+      HOMELABMD_UPDATE_CHECK_INTERVAL_MS: "${HOMELABMD_UPDATE_CHECK_INTERVAL_MS:-21600000}"
+      HOMELABMD_UPDATE_REPOSITORY: "${HOMELABMD_UPDATE_REPOSITORY:-Kaquely/RackDeck}"
+    volumes:
+      - homelabmd-data:/data
+    mem_limit: ${HOMELABMD_MEMORY_LIMIT:-300m}
+    mem_reservation: ${HOMELABMD_MEMORY_RESERVATION:-192m}
+    stop_grace_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  homelabmd-data:
+    name: homelabmd-data
+    external: true
+
+networks:
+  default:
+    name: homelabmd_default
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  author: Kaquely
+  category: Utilities
+  description:
+    en_us: Read-only, real-time dashboard for a homelab.
+  developer: Kaquely
+  icon: https://raw.githubusercontent.com/Kaquely/RackDeck/main/deploy/casaos/icon.svg
+  main: homelabmd
+  port_map: "3000"
+  scheme: http
+  store_app_id: homelabmd
+  tagline:
+    en_us: Read-only homelab dashboard.
+  title:
+    en_us: RackDeck

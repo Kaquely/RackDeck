@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "activeTabId": "tab-system",
+  "tabs": [
+    {
+      "id": "tab-system",
+      "name": "System",
+      "widgets": [
+        {
+          "id": "widget-cpu",
+          "type": "line",
+          "title": "CPU usage",
+          "sourceId": "host",
+          "metrics": ["cpu.usage"],
+          "span": 2,
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "id": "widget-memory",
+          "type": "gauge",
+          "title": "Memory used",
+          "sourceId": "host",
+          "metrics": ["memory.usage"],
+          "span": 1,
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "id": "widget-load",
+          "type": "bullet",
+          "title": "Load average (1m)",
+          "sourceId": "host",
+          "metrics": ["cpu.loadAverage"],
+          "span": 1,
+          "unit": ""
+        }
+      ]
+    },
+    {
+      "id": "tab-storage",
+      "name": "Storage",
+      "widgets": [
+        {
+          "id": "widget-disks",
+          "type": "bar",
+          "title": "Disk usage (busiest mount)",
+          "sourceId": "host",
+          "metrics": ["storage.usedPercent"],
+          "span": 2,
+          "unit": "%",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "id": "widget-disk-table",
+          "type": "table",
+          "title": "Mounts",
+          "sourceId": "host",
+          "metrics": ["storage.disks"],
+          "span": 2
+        }
+      ]
+    },
+    {
+      "id": "tab-network",
+      "name": "Network",
+      "widgets": [
+        {
+          "id": "widget-network",
+          "type": "line",
+          "title": "Network throughput",
+          "sourceId": "host",
+          "metrics": ["network.rxBytesPerSecond", "network.txBytesPerSecond"],
+          "span": 2,
+          "unit": "B/s"
+        },
+        {
+          "id": "widget-network-table",
+          "type": "table",
+          "title": "Interfaces",
+          "sourceId": "host",
+          "metrics": ["network.interfaces"],
+          "span": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Read-only, real-time dashboard for a homelab." />
+    <title>RackDeck</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app__header">
+        <div class="app__identity">
+          <h1 class="app__title">RackDeck</h1>
+          <p class="app__tagline">Read-only view of this homelab</p>
+        </div>
+
+        <div class="app__status">
+          <div class="app__actions">
+            <button
+              id="mode-toggle"
+              class="button button--quiet mode-toggle"
+              type="button"
+              aria-label="Switch to view mode"
+            >
+              View
+            </button>
+            <button id="nodes-button" class="button button--quiet" type="button" hidden>
+              Nodes
+            </button>
+          </div>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <p id="save-state" class="save-state" hidden></p>
+        </div>
+      </header>
+
+      <div id="update-banner" class="update-banner-host" hidden></div>
+
+      <nav id="tabs" class="tabs" aria-label="Dashboard tabs"></nav>
+
+      <main id="grid" class="grid"></main>
+
+      <footer class="app__footer">
+        <p>This dashboard only reads. It cannot change anything it observes.</p>
+      </footer>
+    </div>
+
+    <script type="module" src="./app.ts"></script>
+  </body>
+</html>
